@@ -1,5 +1,7 @@
+mod jwt;
+
 use tide::Request;
-use tide::prelude::*;
+//use tide::prelude::*;
 use tide::log;
 
 #[macro_use]
@@ -16,9 +18,11 @@ struct Config {
 async fn account(req: Request<()>) -> tide::Result<String> {
     let public_key = req.param("public_key")?;
 
-    let res = format!("You sent {}", public_key);
+    log::info!("Received public_key: {}", public_key);
 
-    Ok(res)
+    let token = jwt::get_token(public_key);
+
+    Ok(token)
 }
 
 #[async_std::main]
@@ -43,7 +47,7 @@ fn get_config() -> Box<Config> {
     ).get_matches();
 
     let address = match matches.value_of("address") {
-        Some(str) => str,
+        Some(address) => address,
         None => DEFAULT_ADDRESS,
     };
     let port = match matches.value_of("port") {
@@ -58,7 +62,7 @@ fn get_config() -> Box<Config> {
     };
 
     Box::new(Config {
-        address: String::from(address),
+        address: address.to_owned(),
         port: port
     })
 }
